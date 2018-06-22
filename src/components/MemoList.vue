@@ -6,11 +6,12 @@
         <v-subheader inset>{{ date }}</v-subheader>
         <v-list-tile v-for="(row, rowKey) in day" :key="rowKey" avatar @click="">
           <v-list-tile-avatar>
-            <v-icon :class="[row.iconClass]">{{ row.icon }}</v-icon>
+            <v-icon class="grey lighten-1 white--text">{{ getMemoIcon(row) }}</v-icon>
           </v-list-tile-avatar>
           <v-list-tile-content>
-            <v-list-tile-sub-title>{{ row.subtitle }}</v-list-tile-sub-title>
-            <v-list-tile-title>{{ row.title }}</v-list-tile-title>
+            <v-list-tile-sub-title>{{ getMemoTime(row) }}</v-list-tile-sub-title>
+            <v-list-tile-title>{{ getMemoTitle(row) }}</v-list-tile-title>
+            <v-list-tile-sub-title v-if="row.note">{{ row.note }}</v-list-tile-sub-title>
           </v-list-tile-content>
           <v-list-tile-action>
             <v-btn v-if="day.selected" icon ripple>
@@ -21,11 +22,11 @@
       </v-list>
     </v-flex>
 
-    <v-btn @click.stop="dialog = true" fixed dark fab bottom right color="pink">
+    <v-btn @click.stop="popupInputDialog()" fixed dark fab bottom right color="pink">
       <v-icon>add</v-icon>
     </v-btn>
 
-    <v-dialog v-model="dialog">
+    <v-dialog v-model="inputDialog">
       <v-card>
         <v-card-text>
           <v-container grid-list-md>
@@ -45,7 +46,7 @@
                 </v-menu>
               </v-flex>
               <v-flex xs12 sm6 md4>
-                <v-text-field @click.stop="categoryDialog = true" v-model="input.category" label="Category" readonly></v-text-field>
+                <v-text-field @click.stop="categoryDialog = true" v-model="input.category" label="Category" readonly required></v-text-field>
               </v-flex>
               <v-flex xs12 sm6 md4 v-if="enableAmount()">
                 <v-text-field v-model="input.amount" label="Amount" mask="##########"></v-text-field>
@@ -58,8 +59,8 @@
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn color="blue darken-1" flat @click.native="dialog = false">Close</v-btn>
-          <v-btn color="blue darken-1" flat @click.native="putMemo()">Save</v-btn>
+          <v-btn color="blue darken-1" flat @click.native="inputDialog = false">Close</v-btn>
+          <v-btn color="blue darken-1" flat @click.native="putMemo(input)">Save</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -122,12 +123,14 @@
 </style>
 
 <script>
-  import {insertLine} from '@/api/api'
+  import {insertLine, getData} from '@/api/api'
+  import moment from 'moment'
 
   export default {
+    props: ['isSignedIn'],
     data: () => ({
       offsetTop: 0,
-      dialog: false,
+      inputDialog: false,
       categoryDialog: false,
       input: {
         date: null,
@@ -143,7 +146,8 @@
         '레피손정': { icon: 'local_hospital', title: '레피손정', parent: '약' },
         '씬지록신정': { icon: 'local_hospital', title: '씬지록신정', parent: '약' }
       },
-      memo: {
+      memo: {},
+      memo2: {
         '2018-06-19': [
           { icon: 'folder', iconClass: 'grey lighten-1 white--text', title: 'Photos', subtitle: 'Jan 9, 2014' },
           { icon: 'folder', iconClass: 'grey lighten-1 white--text', title: 'Recipes', subtitle: 'Jan 17, 2014' },
@@ -160,6 +164,26 @@
       }
     }),
     created: function () {
+      const self = this
+
+      getData(this).then(res => {
+        const memo = {}
+
+        for (const i in res.result.values) {
+          const row = res.result.values[i]
+          const day = moment(row[0]).format('YYYY-MM-DD')
+          if (!memo.hasOwnProperty(day)) {
+            memo[day] = []
+          }
+          memo[day].push({
+            date: row[0],
+            category: row[1],
+            amount: row[2],
+            note: row[3]
+          })
+        }
+        self.memo = memo
+      })
     },
     computed: {
       categoryGroup: function () {
@@ -198,17 +222,52 @@
       onScroll (e) {
         this.offsetTop = e.target.scrollTop
       },
+      popupInputDialog () {
+        const now = moment()
+        this.input.date = now.format('YYYY-MM-DD')
+        this.input.time = now.format('HH:mm:ss')
+        this.input.amount = null
+        this.input.note = null
+        this.inputDialog = true
+      },
       enableAmount () {
         if (this.input.category && this.category[this.input.category]) {
           return this.category[this.input.category].amount === true
         }
         return false
       },
-      putMemo () {
-        insertLine(this, 'eventType', 'uid', 'id', 'memo').then(res => {
-          console.log(res)
+      putMemo (data) {
+        const memo = this.memo
+        insertLine(this, data.date + ' ' + data.time, data.category, data.amount, data.note).then(res => {
+          // console.log(res)
+          if (!memo.hasOwnProperty(data.date)) {
+            memo[data.date] = []
+          }
+          memo[data.date].push({
+            date: data.date + ' ' + data.time,
+            category: data.category,
+            amount: data.amount,
+            note: data.note
+          })
         })
-        this.dialog = false
+        this.inputDialog = false
+      },
+      getMemoTime (row) {
+        return moment(row.date).format('LT')
+      },
+      getMemoIcon (row) {
+        const c = row.category
+        if (c in this.category) {
+          return this.category[c].icon
+        }
+        return 'help'
+      },
+      getMemoTitle (row) {
+        const c = row.category
+        if (c in this.category) {
+          return ('parent' in this.category[c] ? this.category[c].parent + ' - ' : '') + this.category[c].title + (this.category[c].amount ? ' ( ' + row.amount + ' ) ' : '')
+        }
+        return c
       }
     }
   }

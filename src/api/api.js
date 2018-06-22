@@ -1,21 +1,41 @@
 // import axios from 'axios'
 
 export {
+  getData,
   insertLine
 }
 
+const SpreadsheetId = (new URL(window.location.href)).searchParams.get('sid')
+
 // https://developers.google.com/sheets/api/quickstart/js
-function insertLine (vue, type, uid, id, memo) {
+
+function getData (vue) {
   const client = vue.$gAuth.getClient()
-  console.log(client)
+  const gdata = vue.$gAuth.getData()
+
+  return client.sheets.spreadsheets.get({
+    spreadsheetId: SpreadsheetId
+  }).then(res => {
+    gdata.list = res.result.sheets.map(x => x.properties.title)
+
+    return client.sheets.spreadsheets.values.get({
+      spreadsheetId: SpreadsheetId,
+      range: 'memo'
+    })
+  })
+}
+
+function insertLine (vue, date, category, amount, note) {
+  const client = vue.$gAuth.getClient()
+  console.log(client.sheets)
 
   return client.sheets.spreadsheets.values.append({
-    spreadsheetId: '15OmVdNDpzRg26kbYT-lBzVC5jX6YZZq74GB5XaUfVeY',
-    range: 'A2:H2',
+    spreadsheetId: SpreadsheetId,
+    range: 'memo',
     valueInputOption: 'RAW',
     resource: {
       values: [
-        [new Date(), type, uid, id, memo]
+        [date, category, amount, note]
       ]
     }
   })

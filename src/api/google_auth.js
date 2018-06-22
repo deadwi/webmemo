@@ -1,8 +1,13 @@
+import EventBus from '@/api/event_bus'
+
 // https://developers.google.com/identity/protocols/OAuth2UserAgent
 const googleAuth = (function () {
   let GoogleAuthInstance
   let GoogleClientInstance
   let authConfig
+  let data = {
+    list: []
+  }
 
   function load (config) {
     installClient().then(function () {
@@ -41,6 +46,10 @@ const googleAuth = (function () {
     return GoogleClientInstance
   }
 
+  function getData () {
+    return data
+  }
+
   function installClient () {
     const apiUrl = 'https://apis.google.com/js/api.js'
     return new Promise(function (resolve, reject) {
@@ -62,13 +71,15 @@ const googleAuth = (function () {
       .then(function () {
         GoogleAuthInstance = window.gapi.auth2.getAuthInstance()
         GoogleClientInstance = window.gapi.client
-        console.log(GoogleClientInstance)
-        GoogleAuthInstance.isSignedIn.listen(updateSigninStatus)
+        EventBus.$emit('loadedAuth', 1)
+        updateSigninStatus(GoogleAuthInstance.isSignedIn.get())
       })
   }
 
   function updateSigninStatus (isSignedIn) {
-    console.log('isSignedIn', isSignedIn)
+    if (isSignedIn) {
+      EventBus.$emit('signedIn', 1)
+    }
   }
 
   return {
@@ -76,7 +87,8 @@ const googleAuth = (function () {
     signIn: signIn,
     getAuthCode: getAuthCode,
     signOut: signOut,
-    getClient: getClient
+    getClient: getClient,
+    getData: getData
   }
 })()
 
