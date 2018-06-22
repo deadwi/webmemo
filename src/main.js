@@ -7,9 +7,12 @@ import Vuetify from 'vuetify'
 import gauth from '@/api/googleAuth'
 import 'vuetify/dist/vuetify.min.css'
 
+const cid = (new URL(window.location.href)).searchParams.get('cid')
+console.log(cid)
+
 Vue.use(Vuetify)
 Vue.use(gauth, {
-  clientId: '443099332988-0gm7ae0t7v9q0k8j6kb0l1u40nv487h4.apps.googleusercontent.com'
+  clientId: cid
 })
 
 Vue.config.productionTip = false
