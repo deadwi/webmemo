@@ -146,22 +146,7 @@
         '레피손정': { icon: 'local_hospital', title: '레피손정', parent: '약' },
         '씬지록신정': { icon: 'local_hospital', title: '씬지록신정', parent: '약' }
       },
-      memo: {},
-      memo2: {
-        '2018-06-19': [
-          { icon: 'folder', iconClass: 'grey lighten-1 white--text', title: 'Photos', subtitle: 'Jan 9, 2014' },
-          { icon: 'folder', iconClass: 'grey lighten-1 white--text', title: 'Recipes', subtitle: 'Jan 17, 2014' },
-          { icon: 'folder', iconClass: 'grey lighten-1 white--text', title: 'Work', subtitle: 'Jan 28, 2014' }
-        ],
-        '2018-06-20': [
-          { icon: 'assignment', iconClass: 'blue white--text', title: 'Vacation itinerary', subtitle: 'Jan 20, 2014' },
-          { icon: 'assignment', iconClass: 'blue white--text', title: 'Vacation itinerary', subtitle: 'Jan 20, 2014' },
-          { icon: 'assignment', iconClass: 'blue white--text', title: 'Vacation itinerary', subtitle: 'Jan 20, 2014' },
-          { icon: 'assignment', iconClass: 'blue white--text', title: 'Vacation itinerary', subtitle: 'Jan 20, 2014' },
-          { icon: 'assignment', iconClass: 'blue white--text', title: 'Vacation itinerary', subtitle: 'Jan 20, 2014' },
-          { icon: 'call_to_action', iconClass: 'amber white--text', title: 'Kitchen remodel', subtitle: 'Jan 10, 2014' }
-        ]
-      }
+      memo: {}
     }),
     created: function () {
       const self = this
@@ -182,7 +167,15 @@
             note: row[3]
           })
         }
-        self.memo = memo
+
+        for (const i in memo) {
+          memo[i].sort((x, y) => x.date > y.date)
+        }
+        const sortedMemo = {}
+        Object.keys(memo).sort().forEach(x => {
+          sortedMemo[x] = memo[x]
+        })
+        self.memo = sortedMemo
       })
     },
     computed: {
@@ -249,6 +242,7 @@
             amount: data.amount,
             note: data.note
           })
+          memo[data.date].sort((x, y) => x.date > y.date)
         })
         this.inputDialog = false
       },
