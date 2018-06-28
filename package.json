@@ -11,12 +11,14 @@
     "build": "node build/build.js"
   },
   "dependencies": {
-    "vue": "^2.5.2",
-    "vue-router": "^3.0.1",
-    "vuetify": "^1.0.0",
     "axios": "^0.17.1",
     "es6-promise": "^4.2.2",
-    "moment": "^2.20.1"
+    "highcharts": "^6.1.0",
+    "moment": "^2.20.1",
+    "vue": "^2.5.2",
+    "vue-router": "^3.0.1",
+    "vue2-highcharts": "^1.2.4",
+    "vuetify": "^1.0.0"
   },
   "devDependencies": {
     "autoprefixer": "^7.1.2",

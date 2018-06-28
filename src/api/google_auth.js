@@ -6,7 +6,10 @@ const googleAuth = (function () {
   let GoogleClientInstance
   let authConfig
   let data = {
-    list: []
+    // sheet name list
+    list: [],
+    category: {},
+    memo: null
   }
 
   function load (config) {
